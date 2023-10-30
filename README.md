@@ -2,6 +2,6 @@
 
 Recordar ejecutar 
 ```
-npm init 
+npm install 
 ```
 Despúes de decargar los archivos
