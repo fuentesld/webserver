@@ -1,7 +1,3 @@
 # Rest Server - Web Server
 
-Recordar ejecutar 
-```
-npm install 
-```
-Despúes de decargar los archivos
+Recordar ejecutar ```npm install ``` para reconstruir los archivos de node.
