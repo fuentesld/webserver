@@ -2,6 +2,7 @@ import { URL } from 'url';
 import express from 'express'
 import cors from 'cors'
 
+import { dbConnection } from '../database/config.js';
 import {router} from '../routes/usuarios.js'
 
 const __dirname = new URL('..', import.meta.url).pathname;
@@ -11,8 +12,13 @@ export class Server {
         this.app = express()
         this.port =  process.env.PORT || 8080
         this.usuariosPath = '/api/usuarios'
+        this.conectarDB()
         this.middlewares()
         this.routes()
+    }
+
+    async conectarDB(){
+        await dbConnection()
     }
 
     middlewares(){
