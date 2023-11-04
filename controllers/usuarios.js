@@ -4,9 +4,7 @@ import bcrypt from 'bcryptjs'
 import {Usuario} from '../models/usuario.js'
 
 export const usuariosGet = async(req=request, res)=> {
-     let {limite=2, desde = 0} = req.query
-     if (isNaN(limite)) limite = 2
-     if (isNaN(desde)) desde = 0
+    const {limite = 2, desde = 0} = req.query
 
 
     // const usuarios = await Usuario.find({estado:true}).limit(limite).skip(Number(desde))
@@ -15,8 +13,7 @@ export const usuariosGet = async(req=request, res)=> {
     const [usuarios, total] = await Promise.all([
         Usuario.find({estado:true}).limit(limite).skip(Number(desde)),
         Usuario.countDocuments({estado:true})
-    ]
-    )
+    ])
     res.json({total, usuarios})
 }
 
@@ -57,6 +54,7 @@ export const usuariosPut = async (req=request, res=response)=> {
 export const usuariosDelete = async(req, res=response)=> {
     const {id} = req.params
     const usuario = await Usuario.findByIdAndUpdate(id, {estado: false})
+    const usuarioAutenticado = req.usuario
     res.json({
         usuario
     })

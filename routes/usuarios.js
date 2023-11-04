@@ -1,18 +1,27 @@
 import { Router } from 'express';
-import {check} from 'express-validator'
+import {check, query} from 'express-validator'
 
 import { noExisteEmail, existeRol, existeUsuarioPorId } from '../Helpers/db-validators.js';
-import { validarCampos } from '../middlewares/validar-campos.js';
 import {usuariosDelete, 
-        usuariosGet, 
-        usuariosPost, 
-        usuariosPut } from '../controllers/usuarios.js';
+    usuariosGet, 
+    usuariosPost, 
+    usuariosPut } from '../controllers/usuarios.js';
+// import { validarJWT } from '../middlewares/validar-jwt.js';
+// import { esAdminRol, tieneRol } from '../middlewares/validar-roles.js';
+// import { validarCampos } from '../middlewares/validar-campos.js';
+import { esAdminRol, tieneRol, validarJWT,validarCampos} from '../middlewares/index.js'
 
-export const router = Router()
+export const usuarioRouter = Router()
 
-router.get('/', usuariosGet)
+usuarioRouter.get('/', 
+    [
+        query('limite', 'límite negativo').optional().isInt({min:1}),
+        query('desde', 'valor inválido').optional().isInt({min:0}),
+        validarCampos,],
+    usuariosGet
+)
 
-router.post('/', [
+usuarioRouter.post('/', [
         check('nombre', 'El nombre esta vacío').not().isEmpty(),
         check('password', 'El password debe de tener mas de seis letras').isLength({ min:6 }),
         check('correo').custom(noExisteEmail),
@@ -23,7 +32,7 @@ router.post('/', [
     ], 
     usuariosPost)
 
-router.put('/:id',
+usuarioRouter.put('/:id',
     [
         check('id', `ID inválido`).isMongoId(),
         check('id').custom(existeUsuarioPorId),
@@ -33,7 +42,10 @@ router.put('/:id',
     usuariosPut
 )
 
-router.delete('/:id',
+usuarioRouter.delete('/:id',
+    validarJWT,
+    // esAdminRol,
+    tieneRol('VENTAS_ROL','ADMIN_ROL'),
     [
         check('id', `ID inválido`).isMongoId(),
         check('id').custom(existeUsuarioPorId),
