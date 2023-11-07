@@ -1,6 +1,6 @@
 import { request, response } from 'express'
 import jwt from 'jsonwebtoken'
-import { Usuario } from '../models/usuario.js'
+import { Usuario } from '../models/index.js'
 
 export const validarJWT= async (req=request, res= response, next)=>{
     const token = req.header('x-token')
@@ -24,7 +24,6 @@ export const validarJWT= async (req=request, res= response, next)=>{
             })
         }
         req.usuario = usuario
-
         next()
     } catch (error) {
         console.log(error);

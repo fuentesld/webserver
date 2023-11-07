@@ -3,8 +3,10 @@ import express from 'express'
 import cors from 'cors'
 
 import { dbConnection } from '../database/config.js';
-import { usuarioRouter } from '../routes/usuarios.js'
+import { usuariosRouter } from '../routes/usuarios.js'
 import { authRouter } from '../routes/auth.js';
+import { categoriasRouter } from '../routes/categorias.js';
+import { productosRouter } from '../routes/productos.js';
 
 const __dirname = new URL('..', import.meta.url).pathname;
 export class Server {
@@ -12,8 +14,12 @@ export class Server {
     constructor(){
         this.app = express()
         this.port =  process.env.PORT || 8080
-        this.usuariosPath = '/api/usuarios'
-        this.authPath = '/api/auth'
+        this.paths = {
+            auth :      '/api/auth',
+            categorias :'/api/categorias',
+            productos : '/api/productos',
+            usuarios :  '/api/usuarios',
+        }
         this.conectarDB()
         this.middlewares()
         this.routes()
@@ -33,8 +39,10 @@ export class Server {
     }
 
     routes(){
-        this.app.use(this.authPath, authRouter)
-        this.app.use(this.usuariosPath, usuarioRouter)
+        this.app.use(this.paths.auth, authRouter)
+        this.app.use(this.paths.categorias, categoriasRouter)
+        this.app.use(this.paths.productos, productosRouter)
+        this.app.use(this.paths.usuarios, usuariosRouter)
 
         this.app.get('*', function (req, res) {
             res.sendFile( __dirname + '/public/404/index.html')

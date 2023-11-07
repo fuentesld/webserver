@@ -19,6 +19,7 @@ export const  UsuarioSchema = Schema({
     },
     rol:{
         type: String,
+        default : 'USER_ROL',
         required : true,
         enum : ['ADMIN_ROL', 'USER_ROL', 'VENTAS_ROL']
     },

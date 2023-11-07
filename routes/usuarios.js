@@ -11,9 +11,9 @@ import {usuariosDelete,
 // import { validarCampos } from '../middlewares/validar-campos.js';
 import { esAdminRol, tieneRol, validarJWT,validarCampos} from '../middlewares/index.js'
 
-export const usuarioRouter = Router()
+export const usuariosRouter = Router()
 
-usuarioRouter.get('/', 
+usuariosRouter.get('/', 
     [
         query('limite', 'límite negativo').optional().isInt({min:1}),
         query('desde', 'valor inválido').optional().isInt({min:0}),
@@ -21,7 +21,7 @@ usuarioRouter.get('/',
     usuariosGet
 )
 
-usuarioRouter.post('/', [
+usuariosRouter.post('/', [
         check('nombre', 'El nombre esta vacío').not().isEmpty(),
         check('password', 'El password debe de tener mas de seis letras').isLength({ min:6 }),
         check('correo').custom(noExisteEmail),
@@ -32,7 +32,7 @@ usuarioRouter.post('/', [
     ], 
     usuariosPost)
 
-usuarioRouter.put('/:id',
+usuariosRouter.put('/:id',
     [
         check('id', `ID inválido`).isMongoId(),
         check('id').custom(existeUsuarioPorId),
@@ -42,7 +42,7 @@ usuarioRouter.put('/:id',
     usuariosPut
 )
 
-usuarioRouter.delete('/:id',
+usuariosRouter.delete('/:id',
     validarJWT,
     // esAdminRol,
     tieneRol('VENTAS_ROL','ADMIN_ROL'),

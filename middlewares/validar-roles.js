@@ -8,13 +8,13 @@ export const esAdminRol = (req = request, res = response,next)=> {
         })
     }
     const {rol, nombre} = req.usuario
-
+    
     if (rol != 'ADMIN_ROL'){
         return res.status(401).json({
             msg:`${nombre} no es administrador`
         })
     }
-
+    
     next()
 } 
 
