@@ -29,8 +29,8 @@ export const  ProductoSchema = Schema({
 
 ProductoSchema.methods.toJSON = function() {
     const {__v, _id, estado, ...data} = this.toObject()
-    const categoriaModificado = {...data, uid: _id}
-    return categoriaModificado
+    const productoModificado = {...data, uid: _id}
+    return productoModificado
 }
 
 export const Producto = model('Producto', ProductoSchema)
