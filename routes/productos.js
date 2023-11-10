@@ -5,7 +5,7 @@ import { esAdminRol, validarJWT,validarCampos} from '../middlewares/index.js'
 import { noExisteNombreProducto, productosDelete, productosGet, productosGetById, productosPost, productosPut } from '../controllers/productos.js';
 
 export const productosRouter = Router()
- 
+
 productosRouter.get('/', 
     [
         query('limite', 'límite negativo').optional().isInt({min:1}),

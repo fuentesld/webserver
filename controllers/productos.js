@@ -5,7 +5,9 @@ import { Producto } from '../models/index.js'
 export const productosGet = async(req = request, res = response) => {
     const {limite = 2, desde = 0} = req.query
     const [productos, total] = await Promise.all([
+
         Producto.find({estado:true}).limit(limite).skip(Number(desde)).populate('usuario', 'nombre').populate('categoria', 'nombre'),
+
         Producto.countDocuments({estado:true})
     ])
     res.status(200).json({total, productos})
@@ -33,34 +35,26 @@ export const productosPost = async(req = request, res = response) => {
 
 //***************** PUT **************************
 export const productosPut = async(req = request, res = response) => {
-    try {
-        const id = req.params.id
-        req.producto = {precio:'0.0'}
-        await buscarProductoId(req, res)
-        sanitizarProductoNombre(req, res)
-        sanitizarProductoPrecio(req,res)
-        sanitizarProductoCategoria(req, res)
-        sanitizarProductoUsuario(req, res)
-        const data = req.producto
-        const productoDB = await Producto.findByIdAndUpdate(id, data, {new:true})
-    
-        res.status(201).json({msg:'ok test', productoDB})
-        
-    } catch (error) {
-        console.log(error);
-    }
+    const id = req.params.id
+    req.producto = {precio:'0.0'}
+    await buscarProductoId(req, res)
+    sanitizarProductoNombre(req, res)
+    sanitizarProductoPrecio(req,res)
+    sanitizarProductoCategoria(req, res)
+    sanitizarProductoUsuario(req, res)
+    const data = req.producto
+    const productoDB = await Producto.findByIdAndUpdate(id, data, {new:true})
+
+    res.status(201).json({msg:'ok test', productoDB})
+
 }
 
 //***************** DELETE **************************
 export const productosDelete = async(req = request, res = response) => {
-    try {
-        const id = req.params.id
-        const productoDB = await Producto.findByIdAndUpdate(id, {estado:false}, {new:true}).populate('categoria', 'nombre').populate('usuario', 'nombre')
-        res.status(200).json({msg:'borrado', productoDB})
-        
-    } catch (error) {
-        console.log(error);
-    }
+    const id = req.params.id
+    const productoDB = await Producto.findByIdAndUpdate(id, {estado:false}, {new:true}).populate('categoria', 'nombre').populate('usuario', 'nombre')
+    res.status(200).json({msg:'borrado', productoDB})
+
 }
 
 //**************************************************************
