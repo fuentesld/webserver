@@ -1,6 +1,7 @@
 import { request, response } from 'express'
 import { Categoria, Producto } from '../models/index.js'
 
+//***************** GET's **************************
 export const productosGet = async(req = request, res = response) => {
     const {limite = 2, desde = 0} = req.query
     const [productos, total] = await Promise.all([
@@ -9,6 +10,8 @@ export const productosGet = async(req = request, res = response) => {
     ])
     res.status(200).json({total, productos})
 }
+
+//***************** GET By Id **************************
 export const productosGetById = async(req = request, res = response) => {
     const id = req.params.id
     console.log(id);
@@ -16,39 +19,67 @@ export const productosGetById = async(req = request, res = response) => {
     res.status(200).json({producto})
 }
 
+//***************** POST **************************
 export const productosPost = async(req = request, res = response) => {
-    // * data
-    const currency = req.body.precio
-    const nombre = req.body.nombre.toUpperCase()
-    const precio = Number(currency.replace(/[^0-9.-]+/g,""));
-    const categoria = req.body.categoria
-
-    //* validation
-    const categoriaDB = await Categoria.findById(categoria)
-    if (!categoriaDB) {
-        return res.status(401).json({msg:'La categoría no existe'})
-    }
-    
-    const data = {
-        nombre,
-        usuario: req.usuario._id,
-        precio,
-        categoria:categoriaDB._id
-    }
-    
-    const producto = new Producto(data)
+    const productoReq = req.producto
+    const producto = new Producto(productoReq)
     await producto.save()
     res.status(201).json({msg:'ok', producto})
 }
 
+//***************** PUT **************************
 export const productosPut = async(req = request, res = response) => {
+    try {
+        const producto = req.producto
+        const id = req.params.id
+        const productoDB = await Producto.findByIdAndUpdate(id, producto, {new:true})
     
-    const id = req.params.id
-    const nombreBody = req.body.nombre
-    const categoriaBody = req.body.categoria
-    const precioBody = req.body.precio
+        res.status(201).json({msg:'ok test', productoDB})
+        
+    } catch (error) {
+        console.log(error);
+    }
+}
 
-    // * Buscamos producto
+//***************** DELETE **************************
+export const productosDelete = async(req = request, res = response) => {
+    try {
+        const id = req.params.id
+        const productoDB = await Producto.findByIdAndUpdate(id, {estado:false}, {new:true}).populate('categoria', 'nombre').populate('usuario', 'nombre')
+        res.status(200).json({msg:'borrado', productoDB})
+        
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+
+
+//***************** HELPERS Productos **************************
+export const InicializaProducto = (req = request, res = response, next)=> {
+    req.producto = {}
+    next()
+}
+
+export const BuscaNombreProducto = async (req = request, res = response, next)=>{
+    const nombre = req.body.nombre
+    const productoDB = await Producto.findOne({nombre})
+    if (productoDB) {
+        return res.status(401).json({msg:'El nombre del producto ya existe'})
+    }
+    next()
+}
+
+export const noExisteNombreProducto = async (nombre)=>{
+    const productoDB = await Producto.findOne({nombre})
+    if (productoDB) {
+        throw new Error(`El nombre '${nombre}' ya existe`)
+    }
+}
+
+
+export const buscaProductoId = async (req = request, res = response, next)=>{
+    const id = req.params.id
     const productoDB = await Producto.findById(id)
     if (!productoDB){
         return res.status(401).json({
@@ -57,12 +88,53 @@ export const productosPut = async(req = request, res = response) => {
     }
     if (!productoDB.estado){
         return res.status(401).json({
-            msg:`el Producto fue borrado`
+            msg:`El Producto fue borrado anteriormente`
         })
     }
-    // * Checamos que la categoria exista y no este marcada como borrada
-    if (categoriaBody && categoriaBody != productoDB.categoria){
-        console.log(categoriaBody);
+
+    const {nombre, precio, categoria, usuario} = productoDB
+    const producto = {
+        nombre,
+        precio,
+        categoria,
+        usuario
+    }
+    
+    req.producto = producto
+    next()
+
+}
+
+export const actualizarProductoNombre = (req = request, res = response, next)=>{
+    const nombre = req.body.nombre
+    if (nombre){
+        req.producto = {...req.producto, nombre}
+    } 
+    next()
+}
+
+export const actualizarProductoPrecio = (req = request, res = response, next)=>{
+    const producto = req.producto
+    const precioBody = req.body.precio || '0.0'
+
+    const precio = !precioBody
+        ? producto.precio
+        : Number(precioBody.replace(/[^0-9.-]+/g,""))
+
+    if(isNaN(precio)){
+        return res.status(401).json({
+            msg:`No pude procesar precio ${precio}`
+        })
+    }
+
+    req.producto = {...req.producto, precio}
+    next()
+}
+
+export const actualizarProductoCategoria = async(req = request, res = response, next)=>{
+    const producto = req.producto
+    const categoriaBody = req.body.categoria
+    if (categoriaBody && categoriaBody != producto.categoria){
         const categoriaDB = await Categoria.findById(categoriaBody)
 
         if(!categoriaDB){
@@ -76,33 +148,24 @@ export const productosPut = async(req = request, res = response) => {
                 msg:`La Categoria fue borrada`
             })
         }
-        productoDB.categoria = categoriaDB._id
-    
+
+        const categoria = categoriaDB._id
+        req.producto = {...req.producto, categoria}
+        
     }
-
-    //* convertimos precio string a numero
-    //  dejamos solo 0-9 y .
-
-    const precio = !precioBody
-        ? productoDB.precio
-        : Number(precioBody.replace(/[^0-9.-]+/g,""))
-
-    if(isNaN(precio)){
-        return res.status(401).json({
-            msg:`No pude procesar precio ${precio}`
-        })
-    }
-
-    if (nombreBody){
-        productoDB.nombre = nombreBody
-    } 
-
-    productoDB.precio = precio
-    productoDB.usuario = req.usuario._id
-
-    res.status(201).json({msg:'ok', productoDB})
+    next()
 }
 
-export const productosDelete = async(req = request, res = response) => {
-    res.status(200).json({msg:'ok'})
+export const actualizarProductoUsuario = (req = request, res = response, next)=>{
+    const producto = req.producto
+    const usuarioJWT = req.usuario
+    const productoIdUsuario = producto.usuario
+    const usuarioIdJWT = usuarioJWT._id
+
+    if(productoIdUsuario !== usuarioIdJWT) {
+        const usuario = usuarioIdJWT
+        req.producto = {...producto, usuario}
+    }
+
+    next()
 }
