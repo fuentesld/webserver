@@ -1,5 +1,5 @@
 import { request, response } from 'express'
-import { Categoria, Producto } from '../models/index.js'
+import { Producto } from '../models/index.js'
 
 //***************** GET's **************************
 export const productosGet = async(req = request, res = response) => {
@@ -14,15 +14,19 @@ export const productosGet = async(req = request, res = response) => {
 //***************** GET By Id **************************
 export const productosGetById = async(req = request, res = response) => {
     const id = req.params.id
-    console.log(id);
     const producto = await Producto.findById(id).populate('usuario','nombre').populate('categoria', 'nombre')
     res.status(200).json({producto})
 }
 
 //***************** POST **************************
 export const productosPost = async(req = request, res = response) => {
-    const productoReq = req.producto
-    const producto = new Producto(productoReq)
+    req.producto = {precio:'0.0'}
+    sanitizarProductoNombre(req, res)
+    sanitizarProductoPrecio(req,res)
+    sanitizarProductoCategoria(req, res)
+    sanitizarProductoUsuario(req, res)
+    const data = req.producto
+    const producto = new Producto(data)
     await producto.save()
     res.status(201).json({msg:'ok', producto})
 }
@@ -30,9 +34,15 @@ export const productosPost = async(req = request, res = response) => {
 //***************** PUT **************************
 export const productosPut = async(req = request, res = response) => {
     try {
-        const producto = req.producto
         const id = req.params.id
-        const productoDB = await Producto.findByIdAndUpdate(id, producto, {new:true})
+        req.producto = {precio:'0.0'}
+        await buscarProductoId(req, res)
+        sanitizarProductoNombre(req, res)
+        sanitizarProductoPrecio(req,res)
+        sanitizarProductoCategoria(req, res)
+        sanitizarProductoUsuario(req, res)
+        const data = req.producto
+        const productoDB = await Producto.findByIdAndUpdate(id, data, {new:true})
     
         res.status(201).json({msg:'ok test', productoDB})
         
@@ -53,23 +63,25 @@ export const productosDelete = async(req = request, res = response) => {
     }
 }
 
-
-
+//**************************************************************
 //***************** HELPERS Productos **************************
-export const InicializaProducto = (req = request, res = response, next)=> {
-    req.producto = {}
-    next()
-}
-
-export const BuscaNombreProducto = async (req = request, res = response, next)=>{
-    const nombre = req.body.nombre
-    const productoDB = await Producto.findOne({nombre})
-    if (productoDB) {
-        return res.status(401).json({msg:'El nombre del producto ya existe'})
+const buscarProductoId = async (req = request, res = response)=>{
+    const id = req.params.id
+    const productoDB = await Producto.findById(id)
+    if (!productoDB){
+        return res.status(401).json({msg:`No existe el Producto`})
     }
-    next()
+    if (!productoDB.estado){
+        return res.status(401).json({msg:`El Producto fue borrado anteriormente`})
+    }
+
+    const {nombre, precio, categoria, usuario} = productoDB
+    const producto = {nombre, precio, categoria, usuario}
+    
+    req.producto = {...producto}
 }
 
+// *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 export const noExisteNombreProducto = async (nombre)=>{
     const productoDB = await Producto.findOne({nombre})
     if (productoDB) {
@@ -77,95 +89,43 @@ export const noExisteNombreProducto = async (nombre)=>{
     }
 }
 
-
-export const buscaProductoId = async (req = request, res = response, next)=>{
-    const id = req.params.id
-    const productoDB = await Producto.findById(id)
-    if (!productoDB){
-        return res.status(401).json({
-            msg:`No existe el Producto`
-        })
-    }
-    if (!productoDB.estado){
-        return res.status(401).json({
-            msg:`El Producto fue borrado anteriormente`
-        })
-    }
-
-    const {nombre, precio, categoria, usuario} = productoDB
-    const producto = {
-        nombre,
-        precio,
-        categoria,
-        usuario
-    }
-    
-    req.producto = producto
-    next()
-
-}
-
-export const actualizarProductoNombre = (req = request, res = response, next)=>{
+// *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+const sanitizarProductoNombre= (req, res)=>{
     const nombre = req.body.nombre
     if (nombre){
         req.producto = {...req.producto, nombre}
     } 
-    next()
 }
 
-export const actualizarProductoPrecio = (req = request, res = response, next)=>{
-    const producto = req.producto
-    const precioBody = req.body.precio || '0.0'
-
+// *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+const sanitizarProductoPrecio = (req, res)=>{
+    const {precio: precioReq} = req.producto
+    const {precio: precioBody} = req.body
     const precio = !precioBody
-        ? producto.precio
-        : Number(precioBody.replace(/[^0-9.-]+/g,""))
-
+    ? precioReq
+    : Number(precioBody.replace(/[^0-9.-]+/g,""))
+    
     if(isNaN(precio)){
-        return res.status(401).json({
-            msg:`No pude procesar precio ${precio}`
-        })
+        return res.status(401).json({msg: `No pude procesar precio ${precio}`})
     }
-
+    
     req.producto = {...req.producto, precio}
-    next()
 }
 
-export const actualizarProductoCategoria = async(req = request, res = response, next)=>{
+// *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+const sanitizarProductoCategoria = async(req = request, res = response)=>{
     const producto = req.producto
     const categoriaBody = req.body.categoria
     if (categoriaBody && categoriaBody != producto.categoria){
-        const categoriaDB = await Categoria.findById(categoriaBody)
-
-        if(!categoriaDB){
-            return res.status(401).json({
-                msg:`No existe la Categoria`
-            })
-        }
-
-        if (!categoriaDB.estado){
-            return res.status(401).json({
-                msg:`La Categoria fue borrada`
-            })
-        }
-
-        const categoria = categoriaDB._id
-        req.producto = {...req.producto, categoria}
-        
+        req.producto = {...req.producto, categoria:categoriaBody}   
     }
-    next()
 }
 
-export const actualizarProductoUsuario = (req = request, res = response, next)=>{
+// *+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+const sanitizarProductoUsuario = (req = request, res = response)=>{
     const producto = req.producto
-    const usuarioJWT = req.usuario
-    const productoIdUsuario = producto.usuario
-    const usuarioIdJWT = usuarioJWT._id
-
-    if(productoIdUsuario !== usuarioIdJWT) {
-        const usuario = usuarioIdJWT
-        req.producto = {...producto, usuario}
+    const {_id: usuarioIdJWT} = req.usuario
+    if(producto.usuario !== usuarioIdJWT) {
+        req.producto = {...producto, usuario: usuarioIdJWT}
     }
-
-    next()
 }

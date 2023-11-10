@@ -1,11 +1,8 @@
 import { Router } from 'express';
-import {check, query, param, body} from 'express-validator'
-
-import { noExisteEmail, existeRol, existeUsuarioPorId, existeCategoria, existeProductoPorId,   existeCategoriaPorId } from '../Helpers/db-validators.js';
-
-import { esAdminRol, tieneRol, validarJWT,validarCampos, sanitizaProducto, sanitizaIdProducto} from '../middlewares/index.js'
-
-import { BuscaNombreProducto, InicializaProducto, actualizarProductoCategoria, actualizarProductoNombre, actualizarProductoPrecio, actualizarProductoUsuario, buscaProductoId, noExisteNombreProducto, productosDelete, productosGet, productosGetById, productosPost, productosPut } from '../controllers/productos.js';
+import {query, param, body} from 'express-validator'
+import { existeProductoPorId, existeCategoriaPorId } from '../Helpers/db-validators.js';
+import { esAdminRol, validarJWT,validarCampos} from '../middlewares/index.js'
+import { noExisteNombreProducto, productosDelete, productosGet, productosGetById, productosPost, productosPut } from '../controllers/productos.js';
 
 export const productosRouter = Router()
  
@@ -18,7 +15,9 @@ productosRouter.get('/',
 )
 
 productosRouter.get('/:id', 
-    [   param('id', `ID inválido`).isMongoId(),
+    [   param('id', `ID inválido`)
+            .isMongoId()
+            .custom(existeProductoPorId),
         validarCampos,
     ],
     productosGetById
@@ -36,15 +35,10 @@ productosRouter.post('/',
             .optional()
             .isString()
             .isCurrency({allow_negatives:false}),
-        body('categoria', 'error en clave de  categoría')
+        body('categoria', 'error en clave de categoría')
             .isMongoId()
             .custom(existeCategoriaPorId),
         validarCampos,
-        InicializaProducto,
-        actualizarProductoNombre,
-        actualizarProductoPrecio,
-        actualizarProductoCategoria,
-        actualizarProductoUsuario,
     ],
     productosPost
 )
@@ -70,11 +64,6 @@ productosRouter.put('/:id',
             .isMongoId()
             .custom(existeCategoriaPorId),
         validarCampos,
-        buscaProductoId,
-        actualizarProductoNombre,
-        actualizarProductoPrecio,
-        actualizarProductoCategoria,
-        actualizarProductoUsuario,
     ],
     productosPut
 )
@@ -84,10 +73,7 @@ productosRouter.delete('/:id',
         esAdminRol,
         param('id', `ID inválido`).isMongoId(),
         validarCampos,
-        buscaProductoId,
+        // buscaProductoId,
     ],
     productosDelete
 )
-
-
-
