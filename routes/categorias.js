@@ -1,10 +1,8 @@
 import { Router } from 'express';
-import {check, query, param, body} from 'express-validator'
-
-import { noExisteEmail, existeRol, existeUsuarioPorId, existeCategoria } from '../Helpers/db-validators.js';
-
-import { esAdminRol, tieneRol, validarJWT,validarCampos} from '../middlewares/index.js'
-import { categoriasDelete, categoriasGet, categoriasGetById, categoriasPost, categoriasPut } from '../controllers/categorias.js';
+import {query, param, body} from 'express-validator'
+import {existeCategoriaPorId } from '../Helpers/db-validators.js';
+import { esAdminRol, validarJWT,validarCampos} from '../middlewares/index.js'
+import { categoriasDelete, categoriasGet, categoriasGetById, categoriasPost, categoriasPut, noExisteNombreCategoria } from '../controllers/categorias.js';
 
 export const categoriasRouter = Router()
 
@@ -17,39 +15,51 @@ categoriasRouter.get('/',
 )
 
 categoriasRouter.get('/:id', 
-    [   param('id', `ID inválido`).isMongoId(),
+    [   param('id', `ID inválido`)
+            .isMongoId()
+            .custom(existeCategoriaPorId),
         validarCampos,
     ],
-    existeCategoria,
     categoriasGetById
 )
 
 categoriasRouter.post('/', 
     [   validarJWT,
         esAdminRol,
-        body('nombre', 'El nombre esta vacío').notEmpty(),
-        validarCampos,],
+        body('nombre', 'El nombre esta vacío')
+            .notEmpty()
+            .isString()
+            .toLowerCase()
+            .custom(noExisteNombreCategoria),
+        validarCampos,
+    ],
     categoriasPost
 )
 
 categoriasRouter.put('/:id', 
     [   validarJWT,
         esAdminRol,
-        param('id', `ID inválido`).isMongoId(),
-        body('nombre', 'El nombre esta vacío').notEmpty(),
-        validarCampos,],
-        existeCategoria,
+        param('id', `ID inválido`)
+            .isMongoId()
+            .custom(existeCategoriaPorId),
+        body('nombre', 'El nombre esta vacío')
+            .optional()
+            .notEmpty()
+            .isString()
+            .toLowerCase()
+            .custom(noExisteNombreCategoria),
+        validarCampos,
+    ],
     categoriasPut
 )
 
 categoriasRouter.delete('/:id', 
-[   validarJWT,
-    esAdminRol,
-    param('id', `ID inválido`).isMongoId(),
-    validarCampos,],
-    existeCategoria,
+    [   validarJWT,
+        esAdminRol,
+        param('id', `ID inválido`)
+            .isMongoId()
+            .custom(existeCategoriaPorId),
+        validarCampos,
+    ],
     categoriasDelete
 )
-
-
-

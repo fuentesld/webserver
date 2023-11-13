@@ -71,7 +71,9 @@ productosRouter.put('/:id',
 productosRouter.delete('/:id', 
     [   validarJWT,
         esAdminRol,
-        param('id', `ID inválido`).isMongoId(),
+        param('id', `ID inválido`)
+            .isMongoId()
+            .custom(existeProductoPorId),
         validarCampos,
         // buscaProductoId,
     ],

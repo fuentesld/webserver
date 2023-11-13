@@ -7,6 +7,7 @@ import { usuariosRouter } from '../routes/usuarios.js'
 import { authRouter } from '../routes/auth.js';
 import { categoriasRouter } from '../routes/categorias.js';
 import { productosRouter } from '../routes/productos.js';
+import { buscarRouter } from '../routes/buscar.js';
 
 const __dirname = new URL('..', import.meta.url).pathname;
 export class Server {
@@ -16,6 +17,7 @@ export class Server {
         this.port =  process.env.PORT || 8080
         this.paths = {
             auth :      '/api/auth',
+            buscar :  '/api/buscar',
             categorias :'/api/categorias',
             productos : '/api/productos',
             usuarios :  '/api/usuarios',
@@ -43,6 +45,7 @@ export class Server {
         this.app.use(this.paths.categorias, categoriasRouter)
         this.app.use(this.paths.productos, productosRouter)
         this.app.use(this.paths.usuarios, usuariosRouter)
+        this.app.use(this.paths.buscar, buscarRouter)
 
         this.app.get('*', function (req, res) {
             res.sendFile( __dirname + '/public/404/index.html')

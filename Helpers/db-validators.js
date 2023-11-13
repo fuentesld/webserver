@@ -21,22 +21,14 @@ export const noExisteEmail = async (correo = '') => {
 
 }
 export const existeUsuarioPorId = async (id = '') => {
-    
+    const existeUsuario = await Usuario.findById(id)
+    if(!existeUsuario || !existeUsuario.estado) {
+        throw new Error(`El usuario ${id} no existe`)
+    }
 
 }
 
 //******** CATEGORIAS */
-
-export const existeCategoria = async (req=request, res=response, next)=>{
-    const id = req.params.id
-    const categoria = await Categoria.findById(id)
-    if (!categoria){
-        return res.status(404).json({
-            msg: 'No existe Categoría'
-        })
-    }
-    next()
-}
 
 export const existeCategoriaPorId = async (id='')=>{
     const existeCategoria = await Categoria.findById(id)
@@ -45,7 +37,7 @@ export const existeCategoriaPorId = async (id='')=>{
     }
 } 
 
-//******** Productos */
+//******** PRODUCTOS */
 
 export const existeProductoPorId = async (id='')=>{
     const existeProducto = await Producto.findById(id)
