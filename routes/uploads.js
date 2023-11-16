@@ -1,35 +1,48 @@
 import { Router } from 'express';
-import { body } from 'express-validator'
+import { body, param, matchedData } from 'express-validator'
 
-import { validarCampos } from '../middlewares/validar-campos.js';
+import { coleccionesPermitidas, validarCampos } from '../middlewares/index.js';
+import { actualizarImagen, actualizarImagenCloudinary, cargarArchivos, mostrarImagen } from '../controllers/uploads.js';
+import { validarArchivoSubir } from '../Helpers/subir-archivo.js';
 
 export const uploadsRouter = Router()
 
+uploadsRouter.get('/:coleccion/:id',
+    [
+        param('id','El id no es válido')
+            .notEmpty()
+            .isMongoId(),
+        param('coleccion')
+            .notEmpty()
+            .custom(c => coleccionesPermitidas(c, ['usuarios', 'productos'])),
 
+            
+        validarCampos
+    ],
+    mostrarImagen
+)
 
 uploadsRouter.post('/', 
-// [
-//     body('correo', 'El correo es obligatorio').isEmail(),
-//     body('password', 'El password no es válido').notEmpty(),
-//     validarCampos],
-//     authPost)
-
-//     uploadsRouter.post('/google', 
-//     [
-//         body('id_token', 'El token_id es obligatorio').notEmpty(),
-//         validarCampos],
+    validarArchivoSubir,
     cargarArchivos
 )
 
-// router.put('/:id',
-//     [
-//         check('id', `ID inválido`).isMongoId(),
-//         check('id').custom(existeUsuarioPorId),
-//         check('rol').custom(existeRol),
-//         validarCampos
-//     ] ,
-//     usuariosPut
-// )
+uploadsRouter.put('/:coleccion/:id',
+    [
+        validarArchivoSubir,
+        param('id','El id no es válido')
+            .notEmpty()
+            .isMongoId(),
+        param('coleccion')
+            .notEmpty()
+            .custom(c => coleccionesPermitidas(c, ['usuarios', 'productos'])),
+
+            
+        validarCampos
+    ],
+    // actualizarImagen
+    actualizarImagenCloudinary
+)
 
 // router.delete('/:id',
 //     [

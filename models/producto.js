@@ -23,6 +23,7 @@ export const  ProductoSchema = Schema({
         ref : 'Categoria',
         required: true,
     },
+    img : {type: String},
 
 
 })
